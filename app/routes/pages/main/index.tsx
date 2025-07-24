@@ -7,7 +7,7 @@ const SereneRetreatPage = () => {
       <header className="flex items-center justify-between bg-[#e6e4d5] px-8 py-4 shadow-md">
         <div className="text-3xl font-semibold">Refine</div>
         <nav className="space-x-6 text-sm font-medium">
-          <a href="#">HOME</a>
+          <a href="#">이민준 ㅈ 게이</a>
           <a href="#">RETREATS</a>
           <a href="#">SHOP</a>
           <a href="#">CONTACT</a>
