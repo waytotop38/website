@@ -1,0 +1,9 @@
+node_modules/
+build/
+/app/components/ui
+/.react-router
+/.vscode
+/.yarn
+yarn.lock
+/.eslintignore
+/.prettierignore
