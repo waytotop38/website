@@ -1,107 +1,131 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
-export default function Home() {
+const Index = () => {
   return (
-    <div className="bg-black font-sans text-white">
+    <div className="bg-white font-sans text-gray-900">
       {/* Navbar */}
-      <header className="bg-opacity-70 fixed top-0 left-0 z-50 flex w-full items-center justify-between bg-black px-8 py-4">
-        <div className="text-2xl font-bold">황보찬</div>
-        <nav className="space-x-6 text-sm uppercase">
-          <a href="#home" className="hover:underline">
-            Home
-          </a>
-          <a href="#about" className="hover:underline">
-            About
-          </a>
-          <a href="#services" className="hover:underline">
-            Services
-          </a>
-          <a href="#contact" className="hover:underline">
-            Contact
-          </a>
-        </nav>
+      <header className="bg-opacity-80 fixed top-0 left-0 z-50 w-full bg-white shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <h1 className="text-xl font-bold">Refine</h1>
+          <nav className="hidden space-x-6 text-sm font-medium md:flex">
+            <a href="#" className="hover:text-blue-500">
+              Home
+            </a>
+            <a href="#" className="hover:text-blue-500">
+              About
+            </a>
+            <a href="#" className="hover:text-blue-500">
+              Projects
+            </a>
+            <a href="#" className="hover:text-blue-500">
+              Contact
+            </a>
+          </nav>
+        </div>
       </header>
 
       {/* Hero Section */}
-      <section
-        id="home"
-        className="relative flex h-screen items-center justify-center bg-black text-center"
-        style={{
-          backgroundImage: 'url(/balls/ball5.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
-        <div className="bg-opacity-60 rounded bg-black p-6">
-          <h1 className="mb-4 text-5xl font-bold">황보찬 is 테토남.</h1>
-          <p className="text-lg text-gray-200">Driven · Focused · Relentless</p>
+      <section className="relative h-screen w-full overflow-hidden">
+        <video
+          autoPlay
+          muted
+          loop
+          className="absolute top-0 left-0 h-full w-full object-cover"
+        >
+          <source src="/hero-video.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        <div className="bg-opacity-30 absolute inset-0 flex flex-col items-center justify-center bg-black px-6 text-center text-white">
+          <motion.h2
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            className="text-4xl font-bold drop-shadow-md md:text-6xl"
+          >
+            Powering Brands Through People.
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.5 }}
+            className="mt-4 text-lg text-gray-200 md:text-xl"
+          >
+            사람을 통해 브랜드를 성장시킵니다.
+          </motion.p>
         </div>
       </section>
 
       {/* About Section */}
-      <section id="about" className="bg-gray-900 px-8 py-24">
-        <div className="mx-auto max-w-4xl space-y-6 text-center">
-          <h2 className="text-3xl font-semibold">About Me</h2>
-          <p className="text-gray-300">
-            I'm on a mission to help others break boundaries and thrive. Whether in
-            business, life, or personal transformation—your journey starts here.
-          </p>
+      <section className="bg-white py-32">
+        <div className="mx-auto max-w-5xl px-6 text-center">
+          <motion.h3
+            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 50 }}
+            transition={{ duration: 0.6 }}
+            className="mb-4 text-3xl font-semibold"
+          >
+            Who We Are
+          </motion.h3>
+          <motion.p
+            whileInView={{ opacity: 1 }}
+            initial={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mx-auto max-w-3xl text-gray-600"
+          >
+            저희는 제조사와 소비자를 잇는 신뢰 기반의 벤더사입니다. 검증된 인플루언서
+            네트워크와 데이터 기반 마케팅 전략을 통해, 제품의 가치를 극대화하고 브랜드의
+            성장을 지원합니다. 다양한 유통 채널과 협업을 통해 안정적인 판매망을 구축하며,
+            제조사의 니즈에 최적화된 솔루션을 제공합니다.
+          </motion.p>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="services" className="bg-gray-800 px-8 py-24">
-        <div className="mx-auto max-w-4xl space-y-12 text-center">
-          <h2 className="text-3xl font-semibold">What I Offer</h2>
-          <div className="grid grid-cols-1 gap-8 text-left text-gray-200 sm:grid-cols-3">
-            {['Mindset Coaching', 'Business Strategy', 'Speaking'].map((title, i) => (
-              <div
+      {/* Projects Section */}
+      <section className="bg-gray-50 py-32">
+        <div className="mx-auto max-w-6xl px-6">
+          <motion.h3
+            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.6 }}
+            className="mb-12 text-center text-3xl font-semibold"
+          >
+            Featured Projects
+          </motion.h3>
+          <div className="grid gap-8 md:grid-cols-3">
+            {[1, 2, 3].map((_, i) => (
+              <motion.div
                 key={i}
-                className="rounded border border-gray-600 p-4 transition hover:border-white"
+                whileHover={{ scale: 1.05 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 50 }}
+                transition={{ duration: 0.5, delay: i * 0.2 }}
+                className="overflow-hidden rounded-xl bg-white shadow-md"
               >
-                <h3 className="mb-2 text-xl font-semibold">{title}</h3>
-                <p className="text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                </p>
-              </div>
+                <img
+                  src={`/balls/ball${i + 1}.png`}
+                  alt={`Project ${i + 1}`}
+                  className="h-60 w-full object-cover"
+                />
+                <div className="p-4">
+                  <h4 className="mb-2 font-semibold">Project Title {i + 1}</h4>
+                  <p className="text-sm text-gray-600">
+                    Brief description of the project goes here. Something sleek and
+                    modern.
+                  </p>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="bg-gray-900 px-8 py-24">
-        <div className="mx-auto max-w-xl space-y-6 text-center">
-          <h2 className="text-3xl font-semibold">Let's Connect</h2>
-          <p className="text-gray-300">Reach out and let's make magic happen.</p>
-          <form className="space-y-4">
-            <input
-              type="text"
-              placeholder="Your Name"
-              className="w-full rounded border border-gray-600 bg-black px-4 py-2 text-white focus:border-white focus:outline-none"
-            />
-            <input
-              type="email"
-              placeholder="Your Email"
-              className="w-full rounded border border-gray-600 bg-black px-4 py-2 text-white focus:border-white focus:outline-none"
-            />
-            <textarea
-              placeholder="Your Message"
-              rows={4}
-              className="w-full rounded border border-gray-600 bg-black px-4 py-2 text-white focus:border-white focus:outline-none"
-            />
-            <button className="w-full rounded bg-white py-2 font-semibold text-black transition hover:bg-gray-300">
-              Send Message
-            </button>
-          </form>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="bg-black py-6 text-center text-sm text-gray-500">
-        <p>© 2025 Your Name. All rights reserved.</p>
+      <footer className="bg-black py-12 text-center text-white">
+        <p className="text-sm text-gray-400">© 2025 Refine. All rights reserved.</p>
       </footer>
     </div>
   );
-}
+};
+
+export default Index;
