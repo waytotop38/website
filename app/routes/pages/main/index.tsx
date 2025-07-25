@@ -34,9 +34,7 @@ export default function Home() {
         }}
       >
         <div className="bg-opacity-60 rounded bg-black p-6">
-          <h1 className="mb-4 text-5xl font-bold">
-            황보찬 is 테토남.
-          </h1>
+          <h1 className="mb-4 text-5xl font-bold">황보찬 is 테토남.</h1>
           <p className="text-lg text-gray-200">Driven · Focused · Relentless</p>
         </div>
       </section>
