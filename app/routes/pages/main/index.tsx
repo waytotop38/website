@@ -36,7 +36,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const found = data.find((r) => r.id === selectedId);
+    const found = data.find((r) => r.UTM === selectedId);
     setRow(found || null);
   }, [selectedId, data]);
 
