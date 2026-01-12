@@ -66,8 +66,8 @@ export default function App() {
         >
           <option value="">스크롤하여 선택하세요</option>
           {data.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.id}
+            <option key={r.UTM} value={r.UTM}>
+              {r.UTM}
             </option>
           ))}
         </select>
