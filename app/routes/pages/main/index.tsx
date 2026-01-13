@@ -106,7 +106,7 @@ export default function App() {
         </p>
 
         <label htmlFor="utm-search" className="mb-1 block text-sm font-medium">
-          인플루언서 검색 (UTM)
+          인플루언서ID 검색
         </label>
 
         {/* ✅ 검색 + 토글(화살표) + 스크롤 가능한 커스텀 드롭다운 */}
