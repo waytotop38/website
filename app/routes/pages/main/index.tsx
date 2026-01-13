@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bar,
@@ -14,10 +15,16 @@ import {
 const API_URL =
   'https://opensheet.elk.sh/1OO5eZQEIaYzP9MRzjIGUDClQ46u4V_HD8WWg3ysmeBY/sheet1';
 
+type Row = {
+  UTM?: string;
+  conversion?: number | string;
+  [key: string]: any;
+};
+
 export default function App() {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<Row[]>([]);
   const [selectedId, setSelectedId] = useState('');
-  const [row, setRow] = useState(null);
+  const [row, setRow] = useState<Row | null>(null);
   const [avgConversion, setAvgConversion] = useState(0);
 
   // 🔎 검색어
@@ -25,12 +32,12 @@ export default function App() {
   // ✅ 커스텀 드롭다운 열림/닫힘
   const [open, setOpen] = useState(false);
 
-  const listRef = useRef(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetch(API_URL)
       .then((res) => res.json())
-      .then((json) => {
+      .then((json: Row[]) => {
         const parsed = json.map((r) => ({
           ...r,
           conversion: Number(r.conversion),
@@ -39,8 +46,14 @@ export default function App() {
         setData(parsed);
 
         const avg =
-          parsed.reduce((sum, r) => sum + (r.conversion || 0), 0) / parsed.length;
+          parsed.reduce((sum, r) => sum + (Number(r.conversion) || 0), 0) /
+          (parsed.length || 1);
+
         setAvgConversion(Number(avg.toFixed(2)));
+      })
+      .catch(() => {
+        setData([]);
+        setAvgConversion(0);
       });
   }, []);
 
@@ -61,7 +74,7 @@ export default function App() {
   }, [data, search]);
 
   // 선택 시, 검색어도 선택값으로 맞추고 드롭다운 닫기
-  const handleSelect = (utm) => {
+  const handleSelect = (utm: string) => {
     setSelectedId(utm);
     setSearch(utm);
     setOpen(false);
@@ -72,7 +85,6 @@ export default function App() {
   // 토글(화살표) 클릭 시: 열고/닫기
   const toggleOpen = () => {
     setOpen((prev) => !prev);
-    // UX: 열 때 스크롤 맨 위로
     setTimeout(() => {
       if (listRef.current) listRef.current.scrollTop = 0;
     }, 0);
@@ -80,7 +92,7 @@ export default function App() {
 
   const chartData = row
     ? [
-        { name: '내 판매량', conversion: row.conversion },
+        { name: '내 판매량', conversion: Number(row.conversion) || 0 },
         { name: '전체 평균', conversion: avgConversion },
       ]
     : [];
@@ -97,26 +109,15 @@ export default function App() {
           인플루언서 검색 (UTM)
         </label>
 
-        <input
-          id="utm-search"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          placeholder="ID를 검색하세요"
-          className="w-full rounded-lg border px-3 py-2 pr-10"
-        />
-
         {/* ✅ 검색 + 토글(화살표) + 스크롤 가능한 커스텀 드롭다운 */}
         <div className="relative">
           <div className="relative">
             <input
+              id="utm-search"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setOpen(true); // ✅ 타이핑하면 열리고 검색됨
+                setOpen(true);
               }}
               onFocus={() => setOpen(true)}
               placeholder="ID를 검색하세요"
@@ -159,9 +160,9 @@ export default function App() {
                 ) : (
                   filtered.map((r) => (
                     <button
-                      key={r.UTM}
+                      key={String(r.UTM)}
                       type="button"
-                      onClick={() => handleSelect(r.UTM)}
+                      onClick={() => handleSelect(String(r.UTM))}
                       className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-100 ${
                         selectedId === r.UTM ? 'bg-gray-100 font-semibold' : ''
                       }`}
@@ -202,7 +203,7 @@ export default function App() {
           <div className="mt-6">
             <div className="mb-4">
               <p className="text-sm text-gray-500">내 판매량</p>
-              <p className="text-2xl font-bold">{row.conversion}</p>
+              <p className="text-2xl font-bold">{Number(row.conversion) || 0}</p>
             </div>
 
             <div className="h-64">
