@@ -60,7 +60,12 @@ module.exports = {
         'react/jsx-indent-props': ['error', 2],
         'react/jsx-no-duplicate-props': 'error',
         'react/jsx-props-no-multi-spaces': 'error',
-        'react/jsx-space-before-closing': 'error',
+        'react/jsx-tag-spacing': [
+          'error',
+          {
+            beforeSelfClosing: 'always',
+          },
+        ],
         'react/jsx-tag-spacing': ['error', { beforeSelfClosing: 'always' }],
         'react/jsx-curly-brace-presence': [
           'error',
