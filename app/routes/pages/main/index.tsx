@@ -495,8 +495,8 @@ export default function App() {
         </div>
 
         <div className="mt-6 text-center text-xs text-slate-400">
-          데이터는 스프레드시트에서 자동으로 불러오며, 환불/취소로 인해 변동될 수
-          있습니다. 또한 실시간 반영이 아니므로 일부 지연이 발생할 수 있습니다.
+          데이터는 환불/취소로 인해 변동될 수 있습니다. 또한 실시간 반영이 아니므로 일부
+          지연이 발생할 수 있습니다.
         </div>
       </div>
     </div>
