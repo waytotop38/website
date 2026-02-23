@@ -5,7 +5,6 @@ import {
   Bar,
   BarChart,
   Cell,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -50,12 +49,10 @@ function tierClass(t?: string) {
   return 'bg-orange-50 text-orange-700 ring-orange-200'; // bronze/default
 }
 
-// ✅ 모든 티어를 "플레티넘에서 보이던" 사이즈로 고정
 function tierTextSize(_: string | undefined) {
   return 'text-sm sm:text-base';
 }
 
-// ✅ extract trailing number for sorting: "influencer-2602-439" -> 439
 function idTailNumber(id: string) {
   const m = String(id).match(/(\d+)\s*$/);
   return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
@@ -151,7 +148,6 @@ export default function App() {
   useEffect(() => {
     const found = data.find((r) => getId(r) === String(selectedId));
     setRow(found || null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, data]);
 
   const sortedData = useMemo(() => {
@@ -173,23 +169,16 @@ export default function App() {
     return sortedData.filter((r) => getId(r).toLowerCase().includes(q));
   }, [sortedData, search]);
 
-  const avg = useMemo(() => {
-    if (!data.length) return 0;
-    return data.reduce((s, r) => s + getConversion(r), 0) / data.length;
-  }, [data, tab]);
-
   const insight = useMemo(() => {
     if (!row) return null;
 
     const sorted = [...data].sort((a, b) => getConversion(b) - getConversion(a));
     const rank = sorted.findIndex((r) => getId(r) === String(selectedId)) + 1;
-    const p = ((sorted.length - rank) / (sorted.length - 1 || 1)) * 100;
 
     return {
       my: getConversion(row),
       rank,
       total: sorted.length,
-      percentile: p,
       tier: normTier(row.Tier) || '—',
     };
   }, [row, data, selectedId, tab]);
@@ -234,14 +223,8 @@ export default function App() {
   };
 
   const chartData = insight
-    ? [
-        { name: '내 판매량', value: insight.my },
-        { name: '전체 평균', value: avg },
-      ]
-    : [
-        { name: '내 판매량', value: 0 },
-        { name: '전체 평균', value: 0 },
-      ];
+    ? [{ name: '내 판매량', value: insight.my }]
+    : [{ name: '내 판매량', value: 0 }];
 
   const showResults = Boolean(insight);
 
@@ -255,8 +238,7 @@ export default function App() {
             </h1>
             <p className="mt-2 text-sm text-slate-500">
               ID를 검색하여 <span className="font-medium text-slate-700">내 판매량</span>
-              을 <span className="font-medium text-slate-700">전체 평균</span>과
-              비교해보세요
+              을 확인해보세요
             </p>
           </div>
 
@@ -357,7 +339,6 @@ export default function App() {
               />
             )}
 
-            {/* ✅ 안내 문구만 */}
             <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
               <span>
                 {errorMsg ? (
@@ -374,12 +355,10 @@ export default function App() {
           </div>
 
           <div className="mt-6 grid items-stretch gap-4 md:grid-cols-12">
-            {/* 왼쪽 차트 */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-8">
-              {/* 차트 헤더 */}
               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center justify-between sm:block">
-                  <p className="text-sm font-medium text-slate-700">판매량 비교</p>
+                  <p className="text-sm font-medium text-slate-700">내 판매량</p>
                   <span className="text-xs text-slate-500 sm:mt-1 sm:block">
                     {showResults ? '선택됨' : '미선택'}
                   </span>
@@ -389,16 +368,12 @@ export default function App() {
                   <div className="sm:mr-6">
                     <Tabs />
                   </div>
-
-                  <span className="rounded-full bg-slate-100 px-3 py-2 text-center text-xs font-medium text-slate-700 sm:px-3 sm:py-1">
-                    {tab === 'p1' ? '1차 평균' : '2차 평균'}: {fmt(avg)}
-                  </span>
                 </div>
               </div>
 
               <div className="h-[320px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
+                  <BarChart data={chartData} barCategoryGap="70%">
                     <XAxis
                       dataKey="name"
                       tickLine={false}
@@ -412,10 +387,13 @@ export default function App() {
                       domain={[0, (dataMax: number) => Math.max(10, Math.ceil(dataMax))]}
                     />
                     <Tooltip />
-                    <ReferenceLine y={avg} stroke="#8b5cf6" strokeDasharray="3 3" />
-                    <Bar dataKey="value" radius={[10, 10, 0, 0]}>
+                    <Bar
+                      dataKey="value"
+                      radius={[10, 10, 0, 0]}
+                      barSize={120} // ✅ 바 굵기 줄임 (원하면 20~32 사이로 조절)
+                    >
                       {chartData.map((_, i) => (
-                        <Cell key={i} fill={i === 0 ? '#3b82f6' : '#8b5cf6'} />
+                        <Cell key={i} fill="#3b82f6" />
                       ))}
                     </Bar>
                   </BarChart>
@@ -423,23 +401,18 @@ export default function App() {
               </div>
 
               <p className="mt-2 text-xs text-slate-500">
-                {tab === 'p1' ? '1차 전체 평균' : '2차 전체 평균'}:{' '}
-                <span className="font-medium text-slate-700">{fmt(avg)}</span>
                 {showResults ? (
                   <>
-                    {' '}
-                    · 내 판매량:{' '}
+                    내 판매량:{' '}
                     <span className="font-medium text-slate-700">{fmt(insight!.my)}</span>
                   </>
                 ) : (
-                  <> · Influencer ID를 선택하면 내 값이 표시됩니다.</>
+                  <>Influencer ID를 선택하면 내 값이 표시됩니다.</>
                 )}
               </p>
             </div>
 
-            {/* 오른쪽 */}
             <div className="flex h-full flex-col gap-4 md:col-span-4">
-              {/* ✅ 내 티어: 좌측 상단 라벨 + 배지는 중앙(모든 티어 동일 크기) */}
               <div className="relative flex-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="absolute top-5 left-5 text-sm font-medium text-slate-700">
                   내 티어
@@ -470,10 +443,6 @@ export default function App() {
                   ) : (
                     <span className="text-slate-300">—</span>
                   )}
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  평균 {fmt(avg)} 대비{' '}
-                  {showResults ? (insight!.my >= avg ? '높음' : '낮음') : '—'}
                 </p>
               </div>
 
