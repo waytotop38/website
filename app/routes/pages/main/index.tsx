@@ -50,6 +50,12 @@ function tierClass(t?: string) {
   return 'bg-orange-50 text-orange-700 ring-orange-200'; // bronze/default
 }
 
+// ✅ Platinum만 "조금" 더 크게 (이전보다 줄임)
+function tierTextSize(t?: string) {
+  const v = normTier(t).toLowerCase();
+  return v === 'platinum' ? 'text-sm sm:text-base' : 'text-sm';
+}
+
 // ✅ extract trailing number for sorting: "influencer-2602-439" -> 439
 function idTailNumber(id: string) {
   const m = String(id).match(/(\d+)\s*$/);
@@ -96,7 +102,7 @@ export default function App() {
             : 'text-slate-300 hover:text-slate-900'
         }`}
       >
-        1차 판매(2/19~2/26)
+        1차 판매(2/19~2/25)
       </button>
       <button
         type="button"
@@ -149,7 +155,6 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, data]);
 
-  // ✅ base list sorted by trailing number asc, stable tie-break by full id
   const sortedData = useMemo(() => {
     const arr = [...data];
     arr.sort((a, b) => {
@@ -161,21 +166,17 @@ export default function App() {
       return aId.localeCompare(bId);
     });
     return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const base = sortedData;
-    if (!q) return base;
-    return base.filter((r) => getId(r).toLowerCase().includes(q));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!q) return sortedData;
+    return sortedData.filter((r) => getId(r).toLowerCase().includes(q));
   }, [sortedData, search]);
 
   const avg = useMemo(() => {
     if (!data.length) return 0;
     return data.reduce((s, r) => s + getConversion(r), 0) / data.length;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, tab]);
 
   const insight = useMemo(() => {
@@ -192,7 +193,6 @@ export default function App() {
       percentile: p,
       tier: normTier(row.Tier) || '—',
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row, data, selectedId, tab]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -245,6 +245,8 @@ export default function App() {
       ];
 
   const showResults = Boolean(insight);
+
+  const isPlatinum = showResults && normTier(insight!.tier).toLowerCase() === 'platinum';
 
   return (
     <div className="flex min-h-screen items-center bg-slate-100 px-4">
@@ -358,7 +360,7 @@ export default function App() {
               />
             )}
 
-            {/* ✅ 여기서는 안내 문구만 남김 (탭/평균은 차트 헤더로 이동) */}
+            {/* ✅ 안내 문구만 */}
             <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
               <span>
                 {errorMsg ? (
@@ -374,9 +376,10 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-12">
+          <div className="mt-6 grid items-stretch gap-4 md:grid-cols-12">
+            {/* 왼쪽 차트 */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-8">
-              {/* ✅ 차트 헤더: 왼쪽 제목 / 오른쪽에 Tabs + 평균 배치 (Tabs만 살짝 중앙쪽) */}
+              {/* 차트 헤더 */}
               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center justify-between sm:block">
                   <p className="text-sm font-medium text-slate-700">판매량 비교</p>
@@ -386,7 +389,6 @@ export default function App() {
                 </div>
 
                 <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
-                  {/* ✅ 여기 mr 값으로 “중앙으로 당기는 정도” 조절 (4/6/8 등) */}
                   <div className="sm:mr-6">
                     <Tabs />
                   </div>
@@ -410,6 +412,7 @@ export default function App() {
                       tickLine={false}
                       axisLine={{ stroke: '#e5e7eb' }}
                       tick={{ fill: '#64748b', fontSize: 12 }}
+                      domain={[0, (dataMax: number) => Math.max(10, Math.ceil(dataMax))]}
                     />
                     <Tooltip />
                     <ReferenceLine y={avg} stroke="#8b5cf6" strokeDasharray="3 3" />
@@ -437,15 +440,22 @@ export default function App() {
               </p>
             </div>
 
-            <div className="space-y-4 md:col-span-4">
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-700">내 티어</p>
+            {/* 오른쪽 */}
+            <div className="flex h-full flex-col gap-4 md:col-span-4">
+              {/* ✅ 내 티어: 좌측 상단 라벨 + (Platinum만 중앙 크게) */}
+              <div className="relative flex-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="absolute top-5 left-5 text-sm font-medium text-slate-700">
+                  내 티어
+                </p>
+
+                <div
+                  className={`flex h-full ${isPlatinum ? 'items-center justify-center' : 'items-center justify-end'}`}
+                >
                   {showResults ? (
                     <span
-                      className={`rounded-full px-3 py-1 text-sm ring-1 ${tierClass(
+                      className={`rounded-full px-3 py-1 font-semibold ring-1 ${tierClass(
                         insight!.tier,
-                      )}`}
+                      )} ${tierTextSize(insight!.tier)}`}
                     >
                       {insight!.tier}
                     </span>
@@ -457,7 +467,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-sm font-medium text-slate-700">내 판매량</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-900">
                   {showResults ? (
@@ -472,7 +482,7 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-sm font-medium text-slate-700">랭킹</p>
                 <p className="mt-2 text-2xl font-semibold text-slate-900">
                   {showResults ? (
