@@ -50,10 +50,9 @@ function tierClass(t?: string) {
   return 'bg-orange-50 text-orange-700 ring-orange-200'; // bronze/default
 }
 
-// ✅ Platinum만 "조금" 더 크게 (이전보다 줄임)
-function tierTextSize(t?: string) {
-  const v = normTier(t).toLowerCase();
-  return v === 'platinum' ? 'text-sm sm:text-base' : 'text-sm';
+// ✅ 모든 티어를 "플레티넘에서 보이던" 사이즈로 고정
+function tierTextSize(_: string | undefined) {
+  return 'text-sm sm:text-base';
 }
 
 // ✅ extract trailing number for sorting: "influencer-2602-439" -> 439
@@ -245,8 +244,6 @@ export default function App() {
       ];
 
   const showResults = Boolean(insight);
-
-  const isPlatinum = showResults && normTier(insight!.tier).toLowerCase() === 'platinum';
 
   return (
     <div className="flex min-h-screen items-center bg-slate-100 px-4">
@@ -442,15 +439,13 @@ export default function App() {
 
             {/* 오른쪽 */}
             <div className="flex h-full flex-col gap-4 md:col-span-4">
-              {/* ✅ 내 티어: 좌측 상단 라벨 + (Platinum만 중앙 크게) */}
+              {/* ✅ 내 티어: 좌측 상단 라벨 + 배지는 중앙(모든 티어 동일 크기) */}
               <div className="relative flex-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="absolute top-5 left-5 text-sm font-medium text-slate-700">
                   내 티어
                 </p>
 
-                <div
-                  className={`flex h-full ${isPlatinum ? 'items-center justify-center' : 'items-center justify-end'}`}
-                >
+                <div className="flex h-full items-center justify-center">
                   {showResults ? (
                     <span
                       className={`rounded-full px-3 py-1 font-semibold ring-1 ${tierClass(
