@@ -16,8 +16,10 @@ const API_URL =
   'https://opensheet.elk.sh/1ZkP5CqYQxU-dLnSJEqm7tPCAEDwhQKfWILv_RfJGoLA/feeding_data';
 
 type Row = {
-  UTM?: string;
-  conversion?: number | string;
+  'Influencer ID'?: string;
+  '1st_total'?: number | string;
+  '2nd_total'?: number | string;
+  Tier?: string; // Bronze, Silver, Gold, Platinum, Diamond
 };
 
 function toNum(v: any) {
@@ -35,21 +37,32 @@ function fmtInt(n: number) {
   );
 }
 
-function badgeLabel(p: number) {
-  if (p >= 90) return '상위 10%';
-  if (p >= 75) return '상위 25%';
-  if (p >= 50) return '상위 50%';
-  return '하위 50%';
+function normTier(t?: string) {
+  return String(t || '').trim();
 }
 
-function badgeClass(p: number) {
-  if (p >= 90) return 'bg-emerald-100 text-emerald-700';
-  if (p >= 75) return 'bg-emerald-50 text-emerald-700';
-  if (p >= 50) return 'bg-amber-50 text-amber-700';
-  return 'bg-rose-50 text-rose-700';
+function tierClass(t?: string) {
+  const v = normTier(t).toLowerCase();
+  if (v === 'diamond') return 'bg-cyan-50 text-cyan-700 ring-cyan-200';
+  if (v === 'platinum') return 'bg-indigo-50 text-indigo-700 ring-indigo-200';
+  if (v === 'gold') return 'bg-amber-50 text-amber-700 ring-amber-200';
+  if (v === 'silver') return 'bg-slate-100 text-slate-700 ring-slate-200';
+  return 'bg-orange-50 text-orange-700 ring-orange-200'; // bronze/default
 }
 
-const PLACEHOLDER_UTMS = ['UTM_001', 'UTM_002', 'UTM_003', 'UTM_004', 'UTM_005'];
+// ✅ extract trailing number for sorting: "influencer-2602-439" -> 439
+function idTailNumber(id: string) {
+  const m = String(id).match(/(\d+)\s*$/);
+  return m ? Number(m[1]) : Number.POSITIVE_INFINITY;
+}
+
+const PLACEHOLDER_IDS = [
+  'influencer-0000-00',
+  'influencer-0000-01',
+  'influencer-0000-02',
+];
+
+type TabKey = 'p1' | 'p2';
 
 export default function App() {
   const [data, setData] = useState<Row[]>([]);
@@ -66,6 +79,39 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [tab, setTab] = useState<TabKey>('p1');
+
+  const getId = (r: Row) => String(r['Influencer ID'] || '');
+  const getConversion = (r: Row) =>
+    tab === 'p1' ? toNum(r['1st_total']) : toNum(r['2nd_total']);
+
+  const Tabs = () => (
+    <div className="inline-flex rounded-xl bg-slate-100 p-1 ring-1 ring-slate-200">
+      <button
+        type="button"
+        onClick={() => setTab('p1')}
+        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap transition sm:px-3 sm:py-1.5 sm:text-xs ${
+          tab === 'p1'
+            ? 'bg-white text-slate-900 shadow-sm'
+            : 'text-slate-300 hover:text-slate-900'
+        }`}
+      >
+        1차 판매(2/19~2/26)
+      </button>
+      <button
+        type="button"
+        onClick={() => setTab('p2')}
+        className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap transition sm:px-3 sm:py-1.5 sm:text-xs ${
+          tab === 'p2'
+            ? 'bg-white text-slate-900 shadow-sm'
+            : 'text-slate-300 hover:text-slate-900'
+        }`}
+      >
+        2차 판매(2/26~3/5)
+      </button>
+    </div>
+  );
+
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -75,7 +121,15 @@ export default function App() {
       .then((res) => res.json())
       .then((json: Row[]) => {
         if (!mounted) return;
-        setData(json.map((r) => ({ ...r, conversion: toNum(r.conversion) })));
+
+        const normalized = json.map((r) => ({
+          ...r,
+          '1st_total': toNum((r as any)['1st_total']),
+          '2nd_total': toNum((r as any)['2nd_total']),
+          Tier: (r as any).Tier,
+        }));
+
+        setData(normalized);
         setLoading(false);
       })
       .catch(() => {
@@ -90,38 +144,56 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const found = data.find((r) => String(r.UTM) === String(selectedId));
+    const found = data.find((r) => getId(r) === String(selectedId));
     setRow(found || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, data]);
+
+  // ✅ base list sorted by trailing number asc, stable tie-break by full id
+  const sortedData = useMemo(() => {
+    const arr = [...data];
+    arr.sort((a, b) => {
+      const aId = getId(a);
+      const bId = getId(b);
+      const da = idTailNumber(aId);
+      const db = idTailNumber(bId);
+      if (da !== db) return da - db;
+      return aId.localeCompare(bId);
+    });
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return data;
-    return data.filter((r) =>
-      String(r.UTM || '')
-        .toLowerCase()
-        .includes(q),
-    );
-  }, [data, search]);
+    const base = sortedData;
+    if (!q) return base;
+    return base.filter((r) => getId(r).toLowerCase().includes(q));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedData, search]);
 
   const avg = useMemo(() => {
     if (!data.length) return 0;
-    return data.reduce((s, r) => s + toNum(r.conversion), 0) / data.length;
-  }, [data]);
+    return data.reduce((s, r) => s + getConversion(r), 0) / data.length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, tab]);
 
   const insight = useMemo(() => {
     if (!row) return null;
-    const sorted = [...data].sort((a, b) => toNum(b.conversion) - toNum(a.conversion));
-    const rank = sorted.findIndex((r) => String(r.UTM) === String(selectedId)) + 1;
+
+    const sorted = [...data].sort((a, b) => getConversion(b) - getConversion(a));
+    const rank = sorted.findIndex((r) => getId(r) === String(selectedId)) + 1;
     const p = ((sorted.length - rank) / (sorted.length - 1 || 1)) * 100;
 
     return {
-      my: toNum(row.conversion),
+      my: getConversion(row),
       rank,
       total: sorted.length,
       percentile: p,
+      tier: normTier(row.Tier) || '—',
     };
-  }, [row, data, selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row, data, selectedId, tab]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!open && e.key !== 'Enter') return;
@@ -138,12 +210,10 @@ export default function App() {
 
     if (e.key === 'Enter' && filtered[highlightIndex]) {
       e.preventDefault();
-      handleSelect(String(filtered[highlightIndex].UTM));
+      handleSelect(getId(filtered[highlightIndex]));
     }
 
-    if (e.key === 'Escape') {
-      setOpen(false);
-    }
+    if (e.key === 'Escape') setOpen(false);
   };
 
   useEffect(() => {
@@ -151,9 +221,9 @@ export default function App() {
     el?.scrollIntoView({ block: 'nearest' });
   }, [highlightIndex]);
 
-  const handleSelect = (utm: string) => {
-    setSelectedId(utm);
-    setSearch(utm);
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    setSearch(id);
     setOpen(false);
   };
 
@@ -241,26 +311,26 @@ export default function App() {
                     ) : (
                       filtered.map((r, i) => (
                         <button
-                          key={String(r.UTM)}
+                          key={getId(r) || String(i)}
                           ref={(el) => {
                             itemRefs.current[i] = el;
                           }}
                           onMouseEnter={() => setHighlightIndex(i)}
-                          onClick={() => handleSelect(String(r.UTM))}
+                          onClick={() => handleSelect(getId(r))}
                           className={`w-full px-4 py-2.5 text-left text-sm transition ${
                             i === highlightIndex
                               ? 'bg-slate-100 font-semibold'
                               : 'hover:bg-slate-50'
                           }`}
                         >
-                          {r.UTM}
+                          {getId(r)}
                         </button>
                       ))
                     )}
 
                     {!loading && !errorMsg && data.length === 0 && (
                       <div className="border-t px-4 py-3 text-xs text-slate-400">
-                        예시: {PLACEHOLDER_UTMS.join(', ')}
+                        예시: {PLACEHOLDER_IDS.join(', ')}
                       </div>
                     )}
                   </div>
@@ -288,6 +358,7 @@ export default function App() {
               />
             )}
 
+            {/* ✅ 여기서는 안내 문구만 남김 (탭/평균은 차트 헤더로 이동) */}
             <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
               <span>
                 {errorMsg ? (
@@ -300,19 +371,30 @@ export default function App() {
                   '데이터가 없어도 기본 레이아웃은 표시됩니다.'
                 )}
               </span>
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">
-                평균: {fmt(avg)}
-              </span>
             </div>
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-12">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-8">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-700">판매량 비교</p>
-                <span className="text-xs text-slate-500">
-                  {showResults ? '선택됨' : '미선택'}
-                </span>
+              {/* ✅ 차트 헤더: 왼쪽 제목 / 오른쪽에 Tabs + 평균 배치 (Tabs만 살짝 중앙쪽) */}
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center justify-between sm:block">
+                  <p className="text-sm font-medium text-slate-700">판매량 비교</p>
+                  <span className="text-xs text-slate-500 sm:mt-1 sm:block">
+                    {showResults ? '선택됨' : '미선택'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
+                  {/* ✅ 여기 mr 값으로 “중앙으로 당기는 정도” 조절 (4/6/8 등) */}
+                  <div className="sm:mr-6">
+                    <Tabs />
+                  </div>
+
+                  <span className="rounded-full bg-slate-100 px-3 py-2 text-center text-xs font-medium text-slate-700 sm:px-3 sm:py-1">
+                    {tab === 'p1' ? '1차 평균' : '2차 평균'}: {fmt(avg)}
+                  </span>
+                </div>
               </div>
 
               <div className="h-[320px]">
@@ -341,7 +423,8 @@ export default function App() {
               </div>
 
               <p className="mt-2 text-xs text-slate-500">
-                전체 평균: <span className="font-medium text-slate-700">{fmt(avg)}</span>
+                {tab === 'p1' ? '1차 전체 평균' : '2차 전체 평균'}:{' '}
+                <span className="font-medium text-slate-700">{fmt(avg)}</span>
                 {showResults ? (
                   <>
                     {' '}
@@ -349,7 +432,7 @@ export default function App() {
                     <span className="font-medium text-slate-700">{fmt(insight!.my)}</span>
                   </>
                 ) : (
-                  <> · UTM을 선택하면 내 값이 표시됩니다.</>
+                  <> · Influencer ID를 선택하면 내 값이 표시됩니다.</>
                 )}
               </p>
             </div>
@@ -357,12 +440,14 @@ export default function App() {
             <div className="space-y-4 md:col-span-4">
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-slate-700">성과 뱃지</p>
+                  <p className="text-sm font-medium text-slate-700">내 티어</p>
                   {showResults ? (
                     <span
-                      className={`rounded-full px-3 py-1 text-sm ${badgeClass(insight!.percentile)}`}
+                      className={`rounded-full px-3 py-1 text-sm ring-1 ${tierClass(
+                        insight!.tier,
+                      )}`}
                     >
-                      {badgeLabel(insight!.percentile)}
+                      {insight!.tier}
                     </span>
                   ) : (
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-500">
@@ -370,9 +455,6 @@ export default function App() {
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
-                  전체 인플루언서 대비 퍼센타일 기준
-                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -404,13 +486,14 @@ export default function App() {
                     <span className="text-slate-300">—</span>
                   )}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">판매량 기준으로 산정</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {tab === 'p1' ? '1차 판매량 기준' : '2차 판매량 기준'}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ✅ 하단 문구 교체 */}
         <div className="mt-6 text-center text-xs text-slate-400">
           데이터는 스프레드시트에서 자동으로 불러오며, 환불/취소로 인해 변동될 수
           있습니다. 또한 실시간 반영이 아니므로 일부 지연이 발생할 수 있습니다.
